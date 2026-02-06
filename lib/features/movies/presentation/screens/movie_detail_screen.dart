@@ -1,32 +1,114 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/dummy/dummy_movies.dart';
+import '../../domain/entities/movie_detail.dart';
+import '../providers/movie_provider.dart';
 import '../widgets/movie_poster.dart';
 
-class MovieDetailScreen extends StatelessWidget {
-  final DummyMovie movie;
+class MovieDetailScreen extends StatefulWidget {
+  final int movieId;
 
-  const MovieDetailScreen({super.key, required this.movie});
+  const MovieDetailScreen({super.key, required this.movieId});
+
+  @override
+  State<MovieDetailScreen> createState() => _MovieDetailScreenState();
+}
+
+class _MovieDetailScreenState extends State<MovieDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch movie details when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MovieProvider>().fetchMovieDetails(widget.movieId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final posterHeight = screenHeight * 0.6;
-
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildPosterSection(context, posterHeight),
-            _buildDetailsSection(),
-          ],
-        ),
+      body: Consumer<MovieProvider>(
+        builder: (context, provider, child) {
+          // Show loading indicator
+          if (provider.isLoadingDetail) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Show error message
+          if (provider.detailError != null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load movie details',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      provider.detailError!,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // Show movie details
+          final movie = provider.selectedMovieDetail;
+          if (movie == null) {
+            return const Center(child: Text('Movie not found'));
+          }
+
+          return _buildMovieDetails(movie);
+        },
       ),
     );
   }
 
-  Widget _buildPosterSection(BuildContext context, double posterHeight) {
+  Widget _buildMovieDetails(MovieDetail movie) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final posterHeight = screenHeight * 0.6;
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildPosterSection(context, posterHeight, movie),
+          _buildDetailsSection(movie),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPosterSection(
+    BuildContext context,
+    double posterHeight,
+    MovieDetail movie,
+  ) {
+    final fullPosterUrl = movie.posterPath.isNotEmpty
+        ? '${AppConstants.imageBaseUrl}/w500${movie.posterPath}'
+        : '';
+
     return SizedBox(
       height: posterHeight,
       child: Stack(
@@ -35,7 +117,7 @@ class MovieDetailScreen extends StatelessWidget {
           Hero(
             tag: 'movie_${movie.id}',
             child: MoviePoster(
-              posterUrl: movie.posterPath,
+              posterUrl: fullPosterUrl,
               width: double.infinity,
               height: posterHeight,
               borderRadius: BorderRadius.zero,
@@ -95,8 +177,7 @@ class MovieDetailScreen extends StatelessWidget {
                       movie.voteAverage.toStringAsFixed(1),
                       style: const TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.ratingGold,
                       ),
                     ),
                   ],
@@ -109,32 +190,32 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailsSection() {
+  Widget _buildDetailsSection(MovieDetail movie) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.all(AppConstants.paddingLarge),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoRow(),
+          _buildInfoRow(movie),
           const SizedBox(height: AppConstants.paddingLarge),
-          _buildGenreTags(),
+          _buildGenreTags(movie),
           const SizedBox(height: AppConstants.paddingLarge),
-          _buildSynopsis(),
+          _buildSynopsis(movie),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow() {
+  Widget _buildInfoRow(MovieDetail movie) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildInfoColumn('Status', 'Released'),
+        _buildInfoColumn('Status', movie.status),
         _buildDivider(),
         _buildInfoColumn('Popularity', _formatPopularity(movie.voteCount)),
         _buildDivider(),
-        _buildInfoColumn('Language', movie.language.toUpperCase()),
+        _buildInfoColumn('Language', movie.originalLanguage.toUpperCase()),
       ],
     );
   }
@@ -170,7 +251,7 @@ class MovieDetailScreen extends StatelessWidget {
     return Container(width: 1, height: 40, color: AppColors.divider);
   }
 
-  Widget _buildGenreTags() {
+  Widget _buildGenreTags(MovieDetail movie) {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -194,29 +275,14 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSynopsis() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Synopsis',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          movie.overview,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.textSecondary,
-            height: 1.6,
-          ),
-          textAlign: TextAlign.justify,
-        ),
-      ],
+  Widget _buildSynopsis(MovieDetail movie) {
+    return Text(
+      movie.overview,
+      style: const TextStyle(
+        fontSize: 14,
+        color: AppColors.textSecondary,
+        height: 1.6,
+      ),
     );
   }
 

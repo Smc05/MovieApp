@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:movie_app/core/theme/app_colors.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../data/dummy/dummy_movies.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../domain/entities/movie.dart';
+import '../providers/movie_provider.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/search_bar_widget.dart';
@@ -16,13 +18,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<DummyMovie> _filteredMovies = [];
-  final List<DummyMovie> _allMovies = DummyMovieData.getMovies();
 
   @override
   void initState() {
     super.initState();
-    _filteredMovies = _allMovies;
+    // Fetch popular movies when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MovieProvider>().fetchPopularMovies();
+    });
   }
 
   @override
@@ -31,61 +34,89 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _filterMovies(String query) {
-    setState(() {
-      _filteredMovies = query.isEmpty
-          ? _allMovies
-          : _allMovies
-                .where(
-                  (movie) =>
-                      movie.title.toLowerCase().contains(query.toLowerCase()),
-                )
-                .toList();
-    });
+  void _onSearchChanged(String query) {
+    final provider = context.read<MovieProvider>();
+    if (query.isEmpty) {
+      provider.clearSearch();
+    } else {
+      provider.searchMovies(query);
+    }
   }
 
   void _clearSearch() {
     _searchController.clear();
-    _filterMovies('');
+    context.read<MovieProvider>().clearSearch();
   }
 
-  void _navigateToMovieDetail(DummyMovie movie) {
+  void _navigateToMovieDetail(Movie movie) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => MovieDetailScreen(movie: movie)),
+      MaterialPageRoute(builder: (_) => MovieDetailScreen(movieId: movie.id)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Movies", style: TextStyle(color: AppColors.textPrimary, fontSize: 24, fontWeight: FontWeight.bold))),
+      appBar: AppBar(
+        title: const Text(
+          AppConstants.appName,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       body: Column(
         children: [
           SearchBarWidget(
             controller: _searchController,
-            onChanged: _filterMovies,
+            onChanged: _onSearchChanged,
             onClear: _clearSearch,
           ),
           Expanded(
-            child: _filteredMovies.isEmpty
-                ? const EmptyStateWidget(
+            child: Consumer<MovieProvider>(
+              builder: (context, provider, child) {
+                // Show loading indicator
+                if (provider.isLoadingPopular &&
+                    provider.displayMovies.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                // Show error message
+                if (provider.popularError != null &&
+                    provider.displayMovies.isEmpty) {
+                  return EmptyStateWidget(
+                    icon: Icons.error_outline,
+                    message: 'Failed to load movies\n${provider.popularError}',
+                  );
+                }
+
+                // Show empty state
+                if (provider.displayMovies.isEmpty) {
+                  return const EmptyStateWidget(
                     icon: Icons.search_off,
                     message: 'No movies found',
-                  )
-                : _buildMovieList(),
+                  );
+                }
+
+                // Show movie list
+                return _buildMovieList(provider.displayMovies);
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMovieList() {
+  Widget _buildMovieList(List<Movie> movies) {
     return ListView.builder(
       padding: const EdgeInsets.all(AppConstants.paddingMedium),
-      itemCount: _filteredMovies.length,
+      itemCount: movies.length,
       itemBuilder: (context, index) {
-        final movie = _filteredMovies[index];
+        final movie = movies[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: AppConstants.paddingMedium),
           child: MovieCard(

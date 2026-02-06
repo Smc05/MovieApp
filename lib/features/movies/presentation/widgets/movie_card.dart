@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../data/dummy/dummy_movies.dart';
+import '../../domain/entities/movie.dart';
 import 'movie_poster.dart';
 
 class MovieCard extends StatelessWidget {
-  final DummyMovie movie;
+  final Movie movie;
   final VoidCallback onTap;
 
   const MovieCard({super.key, required this.movie, required this.onTap});
@@ -83,7 +83,7 @@ class MovieCard extends StatelessWidget {
 
   Widget _buildPoster() {
     return MoviePoster(
-      posterUrl: movie.posterPath,
+      posterUrl: movie.fullPosterPath,
       width: 100,
       height: 150,
       borderRadius: BorderRadius.circular(AppConstants.radiusMedium - 2),

@@ -5,6 +5,9 @@ class AppConstants {
   // App Info
   static const String appName = 'Movie App';
 
+  // API
+  static const String imageBaseUrl = 'https://image.tmdb.org/t/p';
+
   // Spacing
   static const double paddingSmall = 8.0;
   static const double paddingMedium = 16.0;
