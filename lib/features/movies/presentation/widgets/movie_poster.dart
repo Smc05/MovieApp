@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class MoviePoster extends StatelessWidget {
@@ -10,8 +11,8 @@ class MoviePoster extends StatelessWidget {
   const MoviePoster({
     super.key,
     required this.posterUrl,
-    this.width = 100,
-    this.height = 150,
+    this.width = AppConstants.moviePosterWidth,
+    this.height = AppConstants.moviePosterHeight,
     this.borderRadius,
   });
 
@@ -38,7 +39,11 @@ class MoviePoster extends StatelessWidget {
       width: width,
       height: height,
       color: AppColors.divider,
-      child: const Icon(Icons.movie, size: 48, color: AppColors.textHint),
+      child: const Icon(
+        Icons.movie,
+        size: AppConstants.iconSizeXLarge,
+        color: AppColors.textHint,
+      ),
     );
   }
 
@@ -47,7 +52,11 @@ class MoviePoster extends StatelessWidget {
       width: width,
       height: height,
       color: AppColors.divider,
-      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      child: const Center(
+        child: CircularProgressIndicator(
+          strokeWidth: AppConstants.loadingIndicatorStrokeWidth,
+        ),
+      ),
     );
   }
 }

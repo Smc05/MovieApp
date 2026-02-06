@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/constants/app_constants.dart';
 import 'core/network/api_client.dart';
 import 'core/theme/app_theme.dart';
 import 'features/movies/data/datasources/movie_local_datasource.dart';
@@ -12,10 +13,8 @@ import 'features/movies/presentation/screens/home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
 
-  // Initialize dependencies
   final apiClient = ApiClient();
   final remoteDataSource = MovieRemoteDataSourceImpl(apiClient: apiClient);
   final localDataSource = MovieLocalDataSourceImpl(
@@ -39,7 +38,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => MovieProvider(repository: repository),
       child: MaterialApp(
-        title: 'Movie App',
+        title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const HomeScreen(),

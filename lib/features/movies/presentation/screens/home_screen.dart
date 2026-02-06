@@ -17,12 +17,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const double _appBarTitleSize = 26.0;
+  static const double _appBarHeight = 64.0;
+  static const int _searchBarItemOffset = 1;
+
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Fetch popular movies when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MovieProvider>().fetchPopularMovies();
     });
@@ -36,11 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onSearchChanged(String query) {
     final provider = context.read<MovieProvider>();
-    if (query.isEmpty) {
-      provider.clearSearch();
-    } else {
-      provider.searchMovies(query);
-    }
+    query.isEmpty ? provider.clearSearch() : provider.searchMovies(query);
   }
 
   void _clearSearch() {
@@ -58,73 +57,123 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          AppConstants.appName,
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+      appBar: _buildAppBar(),
+      body: Consumer<MovieProvider>(
+        builder: (_, provider, searchBar) {
+          return _buildBody(provider, searchBar!);
+        },
+        child: _SearchBarSection(
+          controller: _searchController,
+          onChanged: _onSearchChanged,
+          onClear: _clearSearch,
         ),
-      ),
-      body: Column(
-        children: [
-          SearchBarWidget(
-            controller: _searchController,
-            onChanged: _onSearchChanged,
-            onClear: _clearSearch,
-          ),
-          Expanded(
-            child: Consumer<MovieProvider>(
-              builder: (context, provider, child) {
-                // Show loading indicator
-                if (provider.isLoadingPopular &&
-                    provider.displayMovies.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                // Show error message
-                if (provider.popularError != null &&
-                    provider.displayMovies.isEmpty) {
-                  return EmptyStateWidget(
-                    icon: Icons.error_outline,
-                    message: 'Failed to load movies\n${provider.popularError}',
-                  );
-                }
-
-                // Show empty state
-                if (provider.displayMovies.isEmpty) {
-                  return const EmptyStateWidget(
-                    icon: Icons.search_off,
-                    message: 'No movies found',
-                  );
-                }
-
-                // Show movie list
-                return _buildMovieList(provider.displayMovies);
-              },
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  Widget _buildMovieList(List<Movie> movies) {
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.background,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      toolbarHeight: _appBarHeight,
+      title: const Text(
+        'Movies',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: _appBarTitleSize,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(MovieProvider provider, Widget searchBar) {
+    if (provider.isLoadingPopular && provider.displayMovies.isEmpty) {
+      return _buildStateWithSearch(
+        searchBar,
+        const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (provider.popularError != null && provider.displayMovies.isEmpty) {
+      return _buildStateWithSearch(
+        searchBar,
+        EmptyStateWidget(
+          icon: Icons.error_outline,
+          message: 'Failed to load movies\n${provider.popularError}',
+        ),
+      );
+    }
+
+    if (provider.displayMovies.isEmpty) {
+      return _buildStateWithSearch(
+        searchBar,
+        const EmptyStateWidget(
+          icon: Icons.search_off,
+          message: 'No movies found',
+        ),
+      );
+    }
+
+    return _buildMovieList(provider.displayMovies, searchBar);
+  }
+
+  Widget _buildStateWithSearch(Widget searchBar, Widget content) {
+    return Column(
+      children: [
+        searchBar,
+        Expanded(child: content),
+      ],
+    );
+  }
+
+  Widget _buildMovieList(List<Movie> movies, Widget searchBar) {
     return ListView.builder(
       padding: const EdgeInsets.all(AppConstants.paddingMedium),
-      itemCount: movies.length,
+      itemCount: movies.length + _searchBarItemOffset,
       itemBuilder: (context, index) {
-        final movie = movies[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppConstants.paddingMedium),
-          child: MovieCard(
-            movie: movie,
-            onTap: () => _navigateToMovieDetail(movie),
-          ),
-        );
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppConstants.paddingMedium),
+            child: searchBar,
+          );
+        }
+
+        return _buildMovieItem(movies[index - _searchBarItemOffset]);
       },
+    );
+  }
+
+  Widget _buildMovieItem(Movie movie) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppConstants.paddingMedium),
+      child: MovieCard(
+        movie: movie,
+        onTap: () => _navigateToMovieDetail(movie),
+      ),
+    );
+  }
+}
+
+/// Extracted search bar section to prevent unnecessary rebuilds
+class _SearchBarSection extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  const _SearchBarSection({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SearchBarWidget(
+      controller: controller,
+      onChanged: onChanged,
+      onClear: onClear,
     );
   }
 }

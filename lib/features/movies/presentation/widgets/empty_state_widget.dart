@@ -18,14 +18,19 @@ class EmptyStateWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: AppColors.textHint),
+          Icon(
+            icon,
+            size: AppConstants.iconSizeXXLarge,
+            color: AppColors.textHint,
+          ),
           const SizedBox(height: AppConstants.paddingMedium),
           Text(
             message,
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 16,
+              fontSize: AppConstants.fontSizeXLarge,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

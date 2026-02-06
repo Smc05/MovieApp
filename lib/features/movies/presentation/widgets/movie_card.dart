@@ -16,67 +16,66 @@ class MovieCard extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      height: 160,
-      margin: const EdgeInsets.only(top: 30),
+      height: AppConstants.movieCardHeight,
+      margin: const EdgeInsets.only(top: AppConstants.movieCardTopMargin),
       child: Stack(
         clipBehavior: Clip.none,
-        children: [
-          // Card with content
-          Positioned(
-            left: 0,
-            top: 0,
-            right: 0,
-            bottom: 0,
-            child: InkWell(
-              onTap: onTap,
+        children: [_buildCardContent(isDarkMode), _buildPosterWithHero()],
+      ),
+    );
+  }
+
+  Widget _buildCardContent(bool isDarkMode) {
+    return Positioned(
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+        child: Card(
+          elevation: isDarkMode ? 0 : 2,
+          color: isDarkMode ? AppColors.darkCardBackground : null,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: AppConstants.movieCardContentLeftPadding,
+              right: AppConstants.paddingMedium,
+              top: AppConstants.paddingMedium,
+              bottom: AppConstants.paddingMedium,
+            ),
+            child: _buildMovieDetails(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPosterWithHero() {
+    return Positioned(
+      left: AppConstants.paddingMedium,
+      top: AppConstants.movieCardPosterOverflow,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Hero(
+          tag: 'movie_${movie.id}',
+          child: Container(
+            decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-              child: Card(
-                elevation: isDarkMode ? 0 : 2,
-                color: isDarkMode ? const Color(0xFF1E1E1E) : null,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                    AppConstants.radiusMedium,
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(AppConstants.shadowOpacity),
+                  blurRadius: AppConstants.shadowBlurRadius,
+                  offset: const Offset(0, AppConstants.shadowOffsetY),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: 140,
-                    right: AppConstants.paddingMedium,
-                    top: AppConstants.paddingMedium,
-                    bottom: AppConstants.paddingMedium,
-                  ),
-                  child: _buildMovieDetails(),
-                ),
-              ),
+              ],
             ),
+            child: _buildPoster(),
           ),
-          // Poster Image positioned to overflow with Hero animation
-          Positioned(
-            left: AppConstants.paddingMedium,
-            top: -30,
-            child: GestureDetector(
-              onTap: onTap,
-              child: Hero(
-                tag: 'movie_${movie.id}',
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.radiusMedium,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: _buildPoster(),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -84,8 +83,8 @@ class MovieCard extends StatelessWidget {
   Widget _buildPoster() {
     return MoviePoster(
       posterUrl: movie.fullPosterPath,
-      width: 100,
-      height: 150,
+      width: AppConstants.moviePosterWidth,
+      height: AppConstants.moviePosterHeight,
       borderRadius: BorderRadius.circular(AppConstants.radiusMedium - 2),
     );
   }
@@ -99,7 +98,7 @@ class MovieCard extends StatelessWidget {
         _buildTitle(),
         const SizedBox(height: 6),
         _buildRatingAndLikes(),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppConstants.paddingSmall),
         _buildOverview(),
       ],
     );
@@ -109,7 +108,7 @@ class MovieCard extends StatelessWidget {
     return Text(
       movie.title,
       style: AppTextStyles.movieTitle.copyWith(
-        fontSize: 16,
+        fontSize: AppConstants.fontSizeXLarge,
         fontWeight: FontWeight.w600,
       ),
       maxLines: 2,
@@ -119,7 +118,11 @@ class MovieCard extends StatelessWidget {
 
   Widget _buildRatingAndLikes() {
     return Row(
-      children: [_buildRating(), const SizedBox(width: 16), _buildLikes()],
+      children: [
+        _buildRating(),
+        const SizedBox(width: AppConstants.paddingMedium),
+        _buildLikes(),
+      ],
     );
   }
 
@@ -127,15 +130,15 @@ class MovieCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.star, size: 14, color: AppColors.ratingGold),
+        const Icon(
+          Icons.star,
+          size: AppConstants.iconSizeMedium,
+          color: AppColors.ratingGold,
+        ),
         const SizedBox(width: 4),
         Text(
           movie.voteAverage.toStringAsFixed(1),
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.ratingGold,
-          ),
+          style: AppTextStyles.ratingValue,
         ),
       ],
     );
@@ -146,23 +149,20 @@ class MovieCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 20,
-          height: 20,
+          width: AppConstants.likeIconSize,
+          height: AppConstants.likeIconSize,
           decoration: const BoxDecoration(
-            color: AppColors.special,
+            color: AppColors.specialColor,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.favorite, size: 12, color: Colors.white),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          _formatLikes(movie.voteCount),
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.special,
+          child: const Icon(
+            Icons.favorite,
+            size: AppConstants.iconSizeSmall,
+            color: Colors.white,
           ),
         ),
+        const SizedBox(width: 4),
+        Text(_formatLikes(movie.voteCount), style: AppTextStyles.likeValue),
       ],
     );
   }
@@ -170,7 +170,10 @@ class MovieCard extends StatelessWidget {
   Widget _buildOverview() {
     return Text(
       movie.overview,
-      style: AppTextStyles.bodySmall.copyWith(fontSize: 12, height: 1.4),
+      style: AppTextStyles.bodySmall.copyWith(
+        fontSize: AppConstants.fontSizeSmall,
+        height: 1.4,
+      ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
     );

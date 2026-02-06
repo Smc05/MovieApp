@@ -4,7 +4,6 @@ class AppColors {
   // Private constructor to prevent instantiation
   AppColors._();
 
-
   // Background Colors (for light theme)
   static const Color background = Color(0xFFF5F5F5);
   static const Color surface = Color(0xFFFFFFFF);
@@ -18,7 +17,10 @@ class AppColors {
   // Other
   static const Color divider = Color(0xFFE0E0E0);
 
-  // Rating & Like
+  // Rating & Like Colors
   static const Color ratingGold = Color(0xFFFFD700);
-  static const Color special = Color.fromARGB(255, 255, 22, 22);
+  static const Color specialColor = Color(0xFFFF1616);
+
+  // Dark Mode Colors
+  static const Color darkCardBackground = Color(0xFF1E1E1E);
 }
