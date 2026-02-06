@@ -15,51 +15,49 @@ class MovieCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Hero(
-      tag: 'movie_${movie.id}',
-      child: Material(
-        type: MaterialType.transparency,
-        child: Container(
-          height: 160,
-          margin: const EdgeInsets.only(top: 30),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Card with content
-              Positioned(
-                left: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-                child: InkWell(
-                  onTap: onTap,
+    return Container(
+      height: 160,
+      margin: const EdgeInsets.only(top: 30),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Card with content
+          Positioned(
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+              child: Card(
+                elevation: isDarkMode ? 0 : 2,
+                color: isDarkMode ? const Color(0xFF1E1E1E) : null,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(
                     AppConstants.radiusMedium,
                   ),
-                  child: Card(
-                    elevation: isDarkMode ? 0 : 2,
-                    color: isDarkMode ? const Color(0xFF1E1E1E) : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.radiusMedium,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        left: 140,
-                        right: AppConstants.paddingMedium,
-                        top: AppConstants.paddingMedium,
-                        bottom: AppConstants.paddingMedium,
-                      ),
-                      child: _buildMovieDetails(),
-                    ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: 140,
+                    right: AppConstants.paddingMedium,
+                    top: AppConstants.paddingMedium,
+                    bottom: AppConstants.paddingMedium,
                   ),
+                  child: _buildMovieDetails(),
                 ),
               ),
-              // Poster Image positioned to overflow
-              Positioned(
-                left: AppConstants.paddingMedium,
-                top: -30,
+            ),
+          ),
+          // Poster Image positioned to overflow with Hero animation
+          Positioned(
+            left: AppConstants.paddingMedium,
+            top: -30,
+            child: GestureDetector(
+              onTap: onTap,
+              child: Hero(
+                tag: 'movie_${movie.id}',
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(
@@ -76,9 +74,9 @@ class MovieCard extends StatelessWidget {
                   child: _buildPoster(),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -147,7 +145,15 @@ class MovieCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.favorite, size: 14, color: AppColors.special),
+        Container(
+          width: 20,
+          height: 20,
+          decoration: const BoxDecoration(
+            color: AppColors.special,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.favorite, size: 12, color: Colors.white),
+        ),
         const SizedBox(width: 4),
         Text(
           _formatLikes(movie.voteCount),

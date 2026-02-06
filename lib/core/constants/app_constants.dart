@@ -12,4 +12,5 @@ class AppConstants {
 
   // Border Radius
   static const double radiusMedium = 12.0;
+  static const double radiusSmall = 8.0;
 }

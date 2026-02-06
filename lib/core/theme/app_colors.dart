@@ -20,6 +20,5 @@ class AppColors {
 
   // Rating & Like
   static const Color ratingGold = Color(0xFFFFD700);
-  static const Color like = Color(0xFFD32F2F);
-  static const Color special = Color(0xFFD32F2F);
+  static const Color special = Color.fromARGB(255, 255, 22, 22);
 }
